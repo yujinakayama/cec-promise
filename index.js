@@ -34,36 +34,17 @@ let request = function (dest, command, response) {
     .then(function () {
       let errorTimer;
 
-      let sendResponse = function(packet, status) {
+      let processResponse = function(packet, status) {
         clearTimeout(errorTimer);
-        responsesPending[response]--;
         resolve({packet: packet, status: status});
+        console.log(response + ": " + status + ", source:" + parseInt(packet.source, 16));
       };
 
       client.once(response, sendResponse);
-
-      if (!(response in responsesPending)) {
-        responsesPending[response] = 0;
-      }
-
-      if(responsesPending[response] < 1) {
-        let sendWhenAble = function() {
-          if (busy) {
-            setTimeout(sendWhenAble, 100);
-          } else {
-            busy = true;
-            client.sendCommand(dest, CEC.Opcode[command]);
-            setTimeout(function () { busy = false; }, 200);
-          }
-        };
-        sendWhenAble();
-      }
-
-      responsesPending[response]++;
+      client.sendCommand(dest, CEC.Opcode[command]);
 
       errorTimer = setTimeout(function () {
-        responsesPending[response]--;
-        client.removeListener(response, sendResponse);
+        client.removeListener(response, processResponse);
         return reject(new Error(`No ${response} received after ${timeout}ms`));
       }, timeout);
     })
