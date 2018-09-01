@@ -37,9 +37,6 @@ let request = function (dest, command, response) {
 
       let processResponse = function(packet, status) {
         const responseSourceAddress = parseInt(packet.source, 16);
-        console.log(response + ": " + packet);
-        console.log("requestDestinationAddress: " + requestDestinationAddress);
-        console.log("responseSourceAddress: " + responseSourceAddress);
 
         if (responseSourceAddress === requestDestinationAddress) {
           client.removeListener(response, processResponse);
