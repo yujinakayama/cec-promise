@@ -50,7 +50,16 @@ let request = function (dest, command, response) {
 
       client.on(response, processResponse);
 
-      client.sendCommand(dest, CEC.Opcode[command]);
+      const sendWhenAble = function() {
+        if (busy) {
+          setTimeout(sendWhenAble, 100);
+        } else {
+          busy = true;
+          client.sendCommand(dest, CEC.Opcode[command]);
+          setTimeout(function () { busy = false; }, 200);
+        }
+      };
+      sendWhenAble();
 
       errorTimer = setTimeout(function () {
         client.removeListener(response, processResponse);
