@@ -28,19 +28,28 @@ let ready = new Promise(function (resolve, reject) {
 });
 
 let request = function (dest, command, response) {
-  return new Promise(function(resolve, reject) {
+  const requestDestinationAddress = dest % 16;
 
+  return new Promise(function(resolve, reject) {
     ready
     .then(function () {
       let errorTimer;
 
       let processResponse = function(packet, status) {
-        clearTimeout(errorTimer);
-        resolve({packet: packet, status: status});
-        console.log(response + ": " + status + ", source:" + parseInt(packet.source, 16));
+        const responseSourceAddress = parseInt(packet.source, 16);
+        console.log(response + ": " + packet);
+        console.log("requestDestinationAddress: " + requestDestinationAddress);
+        console.log("responseSourceAddress: " + responseSourceAddress);
+
+        if (responseSourceAddress === requestDestinationAddress) {
+          client.removeListener(response, processResponse);
+          clearTimeout(errorTimer);
+          resolve({packet: packet, status: status});
+        }
       };
 
-      client.once(response, sendResponse);
+      client.on(response, processResponse);
+
       client.sendCommand(dest, CEC.Opcode[command]);
 
       errorTimer = setTimeout(function () {
